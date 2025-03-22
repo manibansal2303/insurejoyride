@@ -8,6 +8,9 @@ import Index from './pages/Index';
 import Auth from './pages/Auth';
 import NotFound from './pages/NotFound';
 import ApiTest from './pages/ApiTest';
+import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
+
 
 // Initialize auth on app startup
 initializeAuth();
@@ -24,6 +27,8 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/api-test" element={<ApiTest />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} /> 
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Add a catch-all route that redirects to the auth handler for auth callbacks */}
             <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
