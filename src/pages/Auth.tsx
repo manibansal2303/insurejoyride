@@ -1,247 +1,100 @@
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { FaGoogle } from "react-icons/fa";
+import { signInWithGoogle } from "@/integrations/azure/client";
+import { useNavigate } from "react-router-dom";
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "@/firebase/firebase";
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { FaGoogle } from 'react-icons/fa';
-import { toast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+export default function Auth() {
+  const [contact, setContact] = useState("");
+  const [otp, setOtp] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
 
-const Auth = () => {
-  const { isAuthenticated, login, loginWithGoogle, resetPassword, loading } = useAuth();
+  useEffect(() => {
+      try {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+            size: "invisible",
+            callback: () => console.log("Recaptcha verified"),
+        });
+      }
+      catch(e)
+      {
+        console.log('error => ', e);
+      }
+  }, []);
+
+  const sendOTP = async () => {
+      try {
+          const confirmationResult = await signInWithPhoneNumber(auth, contact, (window as any).recaptchaVerifier);
+          setConfirmation(confirmationResult);
+          alert("OTP sent to your contact");
+          signIn();
+      } catch (error) {
+          alert(error.message);
+      }
+  };
+
+  const verifyOTP = async () => {
+      try {
+          await confirmation.confirm(otp);
+          alert("OTP Verified! Logged in successfully.");
+      } catch (error) {
+          alert("Invalid OTP");
+      }
+  };
+
   const navigate = useNavigate();
-  const location = useLocation();
-  const [redirectProcessed, setRedirectProcessed] = useState(false);
-  const [email, setEmail] = useState("");
-  const [authMode, setAuthMode] = useState<"signin" | "reset">("signin");
-  const [processingAuth, setProcessingAuth] = useState(false);
 
-  useEffect(() => {
-    // Only process auth redirect once to prevent infinite loops
-    if (isAuthenticated && !redirectProcessed) {
-      setRedirectProcessed(true);
-      
-      // Check if there's a stored redirect path
-      const redirectPath = sessionStorage.getItem('redirectAfterAuth');
-      console.log("Auth page detected auth, redirect path:", redirectPath);
-      
-      if (redirectPath) {
-        sessionStorage.removeItem('redirectAfterAuth');
-        console.log("Navigating to:", redirectPath);
-        navigate(redirectPath, { replace: true });
-      } else {
-        // Default to home if no redirect path
-        console.log("No redirect path found, going home");
-        navigate('/', { replace: true });
-      }
-    }
-  }, [isAuthenticated, navigate, redirectProcessed]);
-
-  // Check for authentication params in URL
-  useEffect(() => {
-    const hasAuthParams = location.search.includes('code=') || 
-                         location.search.includes('error=') ||
-                         location.search.includes('state=');
-    
-    if (hasAuthParams) {
-      console.log("Auth parameters detected in URL, auth process in progress");
-      setProcessingAuth(true);
-    } else {
-      setProcessingAuth(false);
-    }
-  }, [location.search]);
-
-  const handleLogin = async () => {
-    try {
-      // If no redirect is set yet, store the referrer or a default
-      if (!sessionStorage.getItem('redirectAfterAuth')) {
-        // Check if we came from another page via state
-        const referrer = location.state?.from;
-        
-        // If we have a referrer that's not /auth, use it
-        if (referrer && referrer !== '/auth') {
-          console.log("Setting redirect from referrer:", referrer);
-          sessionStorage.setItem('redirectAfterAuth', referrer);
-        } else {
-          // Default to home if no meaningful referrer
-          console.log("No specific redirect path, setting to home");
-          sessionStorage.setItem('redirectAfterAuth', '/');
-        }
-      }
-      
-      await login();
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
-    }
+  const signIn = () => {
+    navigate("/")
+    console.log("Sign in clicked");
   };
-
-  const handleGoogleLogin = async () => {
-    try {
-      // Similar logic for Google login
-      if (!sessionStorage.getItem('redirectAfterAuth')) {
-        const referrer = location.state?.from;
-        
-        if (referrer && referrer !== '/auth') {
-          console.log("Setting Google redirect from referrer:", referrer);
-          sessionStorage.setItem('redirectAfterAuth', referrer);
-        } else {
-          console.log("No specific Google redirect path, setting to home");
-          sessionStorage.setItem('redirectAfterAuth', '/');
-        }
-      }
-      
-      await loginWithGoogle();
-    } catch (error) {
-      toast({
-        title: "Google login failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
-    }
+  const handleForgotPassword = () => {
+    navigate("/forgot-password"); // Redirect to ForgotPassword page
   };
-
-  const handlePasswordReset = async () => {
-    if (!email.trim()) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address to reset your password",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      await resetPassword(email);
-      toast({
-        title: "Password reset initiated",
-        description: "Check your email for instructions to reset your password",
-      });
-    } catch (error) {
-      toast({
-        title: "Password reset failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (loading || processingAuth) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">
-            {processingAuth ? "Processing authentication..." : "Loading..."}
-          </h2>
-          <p className="text-gray-600">Please wait, this may take a moment</p>
-          <div className="mt-4 w-8 h-8 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // If already authenticated, show a message while the redirect happens
-  if (isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">Already authenticated</h2>
-          <p className="text-gray-600">Redirecting you...</p>
-          <div className="mt-4 w-8 h-8 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-[350px] shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Welcome</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your travel insurance account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Tabs 
-            value={authMode} 
-            onValueChange={(value) => setAuthMode(value as "signin" | "reset")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="reset">Reset Password</TabsTrigger>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <Card className="w-96 shadow-xl">
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-bold text-center">Welcome</h2>
+          <p className="text-center text-gray-500">Sign in to your travel insurance account</p>
+
+          <Tabs defaultValue="user" className="mt-4">
+            <TabsList className="flex justify-center mb-4">
+              <TabsTrigger value="user">User</TabsTrigger>
+              <TabsTrigger value="agent">Agent</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="signin" className="space-y-4">
-              <Button 
-                className="w-full"
-                onClick={handleLogin}
-              >
-                Sign in with Email
-              </Button>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="px-2 bg-gray-50 text-gray-500">OR</span>
-                </div>
+            <TabsContent value="user">
+              <Input type="text" placeholder="Email or Phone Number" className="mb-2" value={contact} onChange={(e) => setContact(e.target.value)} />
+              <div className="flex space-x-2">
+                <Input type="text" placeholder="Enter OTP" className="flex-1" value={otp} onChange={(e) => setOtp(e.target.value)} />
+                <Button onClick={sendOTP}>Get OTP</Button>
+                <div id="recaptcha-container"></div>
               </div>
-              
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center justify-center gap-2"
-                onClick={handleGoogleLogin}
-              >
-                <FaGoogle className="text-red-600" />
-                Sign in with Google
-              </Button>
+              <Button className="w-full mt-4" onClick= { () => {verifyOTP();}}>Sign In</Button>
+              <div className="flex flex-col space-y-2 mt-4">
+                <Button variant="outline" className="w-full flex items-center justify-center">
+                  <FaGoogle onClick={signInWithGoogle} className="mr-2" /> Sign in with Google
+                </Button>
+              </div>
             </TabsContent>
-            
-            <TabsContent value="reset" className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email Address
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+
+            <TabsContent value="agent">
+              <Input type="text" placeholder="Username (Email or Phone)" className="mb-2" />
+              <Input type="password" placeholder="Password" className="mb-2" />
+              <div className="flex justify-between text-sm mb-2">
+                <a href="#" className="text-blue-500" onClick={handleForgotPassword}>Forgot Password?</a>
               </div>
-              
-              <Button 
-                className="w-full"
-                onClick={handlePasswordReset}
-              >
-                Reset Password
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full text-sm"
-                onClick={() => setAuthMode("signin")}
-              >
-                Back to Sign In
-              </Button>
+              <Button className="w-full" onClick={() => { signIn(); }}>Sign In</Button>
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-center text-sm text-gray-600">
-          Secure login powered by Microsoft Azure
-        </CardFooter>
       </Card>
     </div>
   );
-};
-
-export default Auth;
+}
