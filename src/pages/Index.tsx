@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -12,7 +11,7 @@ import ReviewConfirmation from "@/components/ui/ReviewConfirmation";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ConfirmationForm from "@/components/forms/ConfirmationForm";
 import { TravelDetails, Traveler, InsurancePlan } from "@/types";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/react-query";
@@ -25,7 +24,9 @@ const Index = () => {
   const [selectedPlan, setSelectedPlan] = useState<InsurancePlan | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
+  console.log({ currentStep });
+
   // Define the steps for our multi-step form
   const steps = [
     { id: "travel-details", label: "Travel Details" },
@@ -34,7 +35,7 @@ const Index = () => {
     { id: "additional-info", label: "Additional Information" },
     { id: "review", label: "Review & Confirm" },
     { id: "payment", label: "Payment" },
-    { id: "confirmation", label: "Confirmation" }
+    { id: "confirmation", label: "Confirmation" },
   ];
 
   // Initialize form state
@@ -43,7 +44,7 @@ const Index = () => {
     originCountry: "",
     destinationCountry: "",
     tripType: "Single Trip",
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: new Date().toISOString().split("T")[0],
     endDate: "",
     coverType: "Individual",
     travelers: [
@@ -54,8 +55,8 @@ const Index = () => {
         dateOfBirth: "",
         phone: "",
         email: "",
-      }
-    ]
+      },
+    ],
   });
 
   useEffect(() => {
@@ -69,7 +70,7 @@ const Index = () => {
     setCurrentStep(1);
     toast({
       title: "Travel details saved",
-      description: "Your travel information has been updated."
+      description: "Your travel information has been updated.",
     });
   };
 
@@ -78,7 +79,7 @@ const Index = () => {
     setCurrentStep(2);
     toast({
       title: "Personal information saved",
-      description: "Your personal details have been updated."
+      description: "Your personal details have been updated.",
     });
   };
 
@@ -87,19 +88,19 @@ const Index = () => {
     setCurrentStep(3);
     toast({
       title: "Insurance plan selected",
-      description: `You've selected the ${plan.name} plan.`
+      description: `You've selected the ${plan.name} plan.`,
     });
   };
-  
+
   const handleAdditionalInfoSubmit = (data: TravelDetails) => {
     setTravelDetails(data);
     setCurrentStep(4);
     toast({
       title: "Additional information saved",
-      description: "Your additional details have been updated."
+      description: "Your additional details have been updated.",
     });
   };
-  
+
   const handleEditSection = (section: string) => {
     if (section.startsWith("traveler-")) {
       setCurrentStep(1); // Go to personal info step
@@ -109,22 +110,22 @@ const Index = () => {
       setCurrentStep(2); // Go to quotes step
     }
   };
-  
+
   const handleReviewConfirm = () => {
     // Check if the user is authenticated before proceeding to payment
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to continue with your purchase.",
-        variant: "destructive"
-      });
-      navigate("/auth");
-      return;
-    }
-    
+    // if (!isAuthenticated) {
+    //   toast({
+    //     title: "Authentication required",
+    //     description: "Please sign in to continue with your purchase.",
+    //     variant: "destructive",
+    //   });
+    //   navigate("/auth");
+    //   return;
+    // }
+
     setCurrentStep(5); // Proceed to payment
   };
-  
+
   const handlePaymentComplete = () => {
     setCurrentStep(6); // Proceed to confirmation
   };
@@ -138,14 +139,14 @@ const Index = () => {
     switch (currentStep) {
       case 0:
         return (
-          <TravelDetailsForm 
-            initialValues={travelDetails} 
-            onSubmit={handleTravelDetailsSubmit} 
+          <TravelDetailsForm
+            initialValues={travelDetails}
+            onSubmit={handleTravelDetailsSubmit}
           />
         );
       case 1:
         return (
-          <PersonalInfoForm 
+          <PersonalInfoForm
             travelDetails={travelDetails}
             onSubmit={handlePersonalInfoSubmit}
             onBack={handleBackStep}
@@ -153,7 +154,7 @@ const Index = () => {
         );
       case 2:
         return (
-          <InsuranceQuotesForm 
+          <InsuranceQuotesForm
             travelDetails={travelDetails}
             onSubmit={handleInsuranceQuoteSelect}
             onBack={handleBackStep}
@@ -179,10 +180,10 @@ const Index = () => {
         );
       case 5:
         // If we somehow got to payment without auth, redirect to auth
-        if (!isAuthenticated) {
-          navigate("/auth");
-          return null;
-        }
+        // if (!isAuthenticated) {
+        //   navigate("/auth");
+        //   return null;
+        // }
         return (
           <PaymentForm
             travelDetails={travelDetails}
@@ -209,10 +210,12 @@ const Index = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Application Error</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Application Error
+          </h1>
           <p className="text-gray-700 mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-insurance-blue text-white px-4 py-2 rounded hover:bg-insurance-blue/90"
           >
             Reload Application
@@ -235,10 +238,7 @@ const Index = () => {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-insurance-blue"></div>
                   </div>
                 ) : (
-                  <MultiStepForm 
-                    steps={steps} 
-                    currentStep={currentStep}
-                  >
+                  <MultiStepForm steps={steps} currentStep={currentStep}>
                     {renderStepContent()}
                   </MultiStepForm>
                 )}

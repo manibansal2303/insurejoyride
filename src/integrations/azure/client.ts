@@ -16,7 +16,7 @@ const msalConfig = {
 
 // Azure Function App configuration
 const apiConfig = {
-  baseUrl: import.meta.env.VITE_AZURE_FUNCTION_URL || 'https://travel1-insurance-api.azurewebsites.net/api',
+  baseUrl: import.meta.env.VITE_AZURE_FUNCTION_URL || 'https://travel-insurance-api.azurewebsites.net/api',
   scopes: [(import.meta.env.VITE_AZURE_AD_SCOPE || 'https://insurebuddy.onmicrosoft.com/user_impersonation')],
 };
 

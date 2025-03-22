@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,51 +18,56 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
   onSubmit,
   onBack,
 }) => {
-  const [currentTravelDetails, setCurrentTravelDetails] = useState<TravelDetails>(travelDetails);
-  
+  const [currentTravelDetails, setCurrentTravelDetails] =
+    useState<TravelDetails>(travelDetails);
+
   const handlePassportUpload = (travelerIndex: number, file: File | null) => {
     const updatedTravelers = [...currentTravelDetails.travelers];
-    
+
     if (!updatedTravelers[travelerIndex].documents) {
       updatedTravelers[travelerIndex].documents = {};
     }
-    
+
     updatedTravelers[travelerIndex].documents!.passport = file;
-    
+
     setCurrentTravelDetails({
       ...currentTravelDetails,
       travelers: updatedTravelers,
     });
-    
+
     toast({
       title: "Passport Uploaded",
       description: `Passport for ${updatedTravelers[travelerIndex].firstName} uploaded successfully.`,
     });
   };
-  
+
   const handleVisaUpload = (travelerIndex: number, file: File | null) => {
     const updatedTravelers = [...currentTravelDetails.travelers];
-    
+
     if (!updatedTravelers[travelerIndex].documents) {
       updatedTravelers[travelerIndex].documents = {};
     }
-    
+
     updatedTravelers[travelerIndex].documents!.visa = file;
-    
+
     setCurrentTravelDetails({
       ...currentTravelDetails,
       travelers: updatedTravelers,
     });
-    
+
     toast({
       title: "Visa Uploaded",
       description: `Visa for ${updatedTravelers[travelerIndex].firstName} uploaded successfully.`,
     });
   };
-  
-  const handleBeneficiaryChange = (travelerIndex: number, field: string, value: string) => {
+
+  const handleBeneficiaryChange = (
+    travelerIndex: number,
+    field: string,
+    value: string
+  ) => {
     const updatedTravelers = [...currentTravelDetails.travelers];
-    
+
     if (!updatedTravelers[travelerIndex].beneficiary) {
       updatedTravelers[travelerIndex].beneficiary = {
         name: "",
@@ -71,21 +75,29 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
         contactDetails: "",
       };
     }
-    
+
     // Fix the TypeScript error by using type assertion for the field
-    if (field === "name" || field === "relationship" || field === "contactDetails") {
+    if (
+      field === "name" ||
+      field === "relationship" ||
+      field === "contactDetails"
+    ) {
       updatedTravelers[travelerIndex].beneficiary![field] = value;
     }
-    
+
     setCurrentTravelDetails({
       ...currentTravelDetails,
       travelers: updatedTravelers,
     });
   };
-  
-  const handlePassportInfoChange = (travelerIndex: number, field: string, value: string) => {
+
+  const handlePassportInfoChange = (
+    travelerIndex: number,
+    field: string,
+    value: string
+  ) => {
     const updatedTravelers = [...currentTravelDetails.travelers];
-    
+
     if (!updatedTravelers[travelerIndex].passport) {
       updatedTravelers[travelerIndex].passport = {
         number: "",
@@ -94,79 +106,130 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
         nationality: "",
       };
     }
-    
+
     // Fix the TypeScript error by using type assertion for the field
-    if (field === "number" || field === "issueDate" || field === "expiryDate" || field === "nationality") {
+    if (
+      field === "number" ||
+      field === "issueDate" ||
+      field === "expiryDate" ||
+      field === "nationality"
+    ) {
       updatedTravelers[travelerIndex].passport![field] = value;
     }
-    
+
     setCurrentTravelDetails({
       ...currentTravelDetails,
       travelers: updatedTravelers,
     });
   };
-  
-  const handleFileUpload = (travelerIndex: number, documentType: 'passport' | 'visa', e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileUpload = (
+    travelerIndex: number,
+    documentType: "passport" | "visa",
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0] || null;
+  
     if (file) {
-      if (documentType === 'passport') {
-        handlePassportUpload(travelerIndex, file);
-      } else {
-        handleVisaUpload(travelerIndex, file);
-      }
+      // Prepare FormData to send as multipart/form-data
+      const formData = new FormData();
+      formData.append(documentType, file);
+  
+      const uploadEndpoint = "https://httpbin.org/post";
+  
+      fetch(uploadEndpoint, {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {  
+          if (documentType === "passport") {
+            handlePassportUpload(travelerIndex, file);
+          } else {
+            handleVisaUpload(travelerIndex, file);
+          }
+
+          const updatedTravelers = [...currentTravelDetails.travelers];
+          const traveler = updatedTravelers[travelerIndex];
+    
+          traveler.passport = {
+            number: "A1234567",
+            nationality: "CountryX",
+            issueDate: "2015-01-01",
+            expiryDate: "2025-01-01",  
+          };
+          traveler.beneficiary = {
+            name: "John Doe",
+            contactDetails: "9999999999",
+            relationship: ""
+          };
+    
+        })
+        .catch((error) => {
+          console.error("Upload Error:", error);
+        });
     }
   };
   
+  
+
   const handleContinue = () => {
     // Check if all required fields are filled
     const missingFields = [];
-    
+
     for (const traveler of currentTravelDetails.travelers) {
       if (!traveler.passport?.number) missingFields.push("Passport Number");
-      if (!traveler.passport?.expiryDate) missingFields.push("Passport Expiry Date");
+      if (!traveler.passport?.expiryDate)
+        missingFields.push("Passport Expiry Date");
       if (!traveler.beneficiary?.name) missingFields.push("Beneficiary Name");
     }
-    
+
     if (missingFields.length > 0) {
       toast({
         title: "Missing Information",
-        description: `Please fill in the following fields: ${missingFields.join(", ")}`,
+        description: `Please fill in the following fields: ${missingFields.join(
+          ", "
+        )}`,
         variant: "destructive",
       });
       return;
     }
-    
+
     onSubmit(currentTravelDetails);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Additional Information</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Additional Information
+        </h2>
         <p className="text-gray-500 mt-2">
           Please provide additional details required for your insurance policy
         </p>
       </div>
-      
+
       <div className="bg-insurance-blue/5 p-5 rounded-lg mb-6">
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-6 w-6 text-insurance-blue flex-shrink-0 mt-1" />
           <div>
             <h3 className="font-medium text-gray-900">Important</h3>
             <p className="text-sm text-gray-600 mt-1">
-              The information you provide should match your official documents exactly. Any discrepancies may result in claim rejection or policy cancellation.
+              The information you provide should match your official documents
+              exactly. Any discrepancies may result in claim rejection or policy
+              cancellation.
             </p>
           </div>
         </div>
       </div>
-      
+
       {currentTravelDetails.travelers.map((traveler, index) => (
         <Card key={traveler.id} className="mb-6">
           <CardContent className="pt-6">
             <h3 className="font-medium text-lg mb-4">
               Traveler {index + 1}: {traveler.firstName} {traveler.lastName}
             </h3>
-            
+
             <div className="space-y-6">
               <div>
                 <h4 className="font-medium mb-3">Passport Information</h4>
@@ -175,62 +238,104 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Passport Number*
                     </label>
-                    <input 
+                    <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.passport?.number || ""}
-                      onChange={(e) => handlePassportInfoChange(index, "number", e.target.value)}
+                      onChange={(e) =>
+                        handlePassportInfoChange(
+                          index,
+                          "number",
+                          e.target.value
+                        )
+                      }
                     />
+                    {traveler.passport?.number &&
+                      !/^[A-Za-z0-9]{6,20}$/.test(traveler.passport.number) && (
+                        <p className="text-red-500 text-xs mt-1">
+                          Please enter a valid passport number (6 to 20
+                          alphanumeric characters).
+                        </p>
+                      )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nationality
                     </label>
-                    <input 
+                    <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.passport?.nationality || ""}
-                      onChange={(e) => handlePassportInfoChange(index, "nationality", e.target.value)}
+                      onChange={(e) =>
+                        handlePassportInfoChange(
+                          index,
+                          "nationality",
+                          e.target.value
+                        )
+                      }
                     />
+                    {!/^[A-Za-z\s]*$/.test(
+                      traveler.passport?.nationality || ""
+                    ) && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Please enter a valid nationality (letters only).
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Issue Date
                     </label>
-                    <input 
+                    <input
                       type="date"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.passport?.issueDate || ""}
-                      onChange={(e) => handlePassportInfoChange(index, "issueDate", e.target.value)}
+                      onChange={(e) =>
+                        handlePassportInfoChange(
+                          index,
+                          "issueDate",
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Expiry Date*
                     </label>
-                    <input 
+                    <input
                       type="date"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.passport?.expiryDate || ""}
-                      onChange={(e) => handlePassportInfoChange(index, "expiryDate", e.target.value)}
+                      onChange={(e) =>
+                        handlePassportInfoChange(
+                          index,
+                          "expiryDate",
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-medium mb-3">Document Upload</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="border border-dashed border-gray-300 rounded-md p-4">
                     <label className="flex flex-col items-center cursor-pointer">
                       <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm font-medium">Upload Passport Copy</span>
-                      <span className="text-xs text-gray-500 mt-1">PDF, JPG or PNG (Max 5MB)</span>
-                      <input 
-                        type="file" 
+                      <span className="text-sm font-medium">
+                        Upload Passport Copy
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        PDF, JPG or PNG (Max 5MB)
+                      </span>
+                      <input
+                        type="file"
                         className="hidden"
                         accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileUpload(index, 'passport', e)}
+                        onChange={(e) => handleFileUpload(index, "passport", e)}
                       />
                       {traveler.documents?.passport && (
                         <div className="mt-2 flex items-center text-xs text-insurance-green">
@@ -240,17 +345,21 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
                       )}
                     </label>
                   </div>
-                  
+
                   <div className="border border-dashed border-gray-300 rounded-md p-4">
                     <label className="flex flex-col items-center cursor-pointer">
                       <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm font-medium">Upload Visa (if applicable)</span>
-                      <span className="text-xs text-gray-500 mt-1">PDF, JPG or PNG (Max 5MB)</span>
-                      <input 
-                        type="file" 
+                      <span className="text-sm font-medium">
+                        Upload Visa (if applicable)
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        PDF, JPG or PNG (Max 5MB)
+                      </span>
+                      <input
+                        type="file"
                         className="hidden"
                         accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileUpload(index, 'visa', e)}
+                        onChange={(e) => handleFileUpload(index, "visa", e)}
                       />
                       {traveler.documents?.visa && (
                         <div className="mt-2 flex items-center text-xs text-insurance-green">
@@ -262,7 +371,7 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-medium mb-3">Beneficiary Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -270,34 +379,71 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Beneficiary Name*
                     </label>
-                    <input 
+                    <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.beneficiary?.name || ""}
-                      onChange={(e) => handleBeneficiaryChange(index, "name", e.target.value)}
+                      onChange={(e) =>
+                        handleBeneficiaryChange(index, "name", e.target.value)
+                      }
                     />
+                    {!/^[A-Za-z\s]*$/.test(
+                      traveler.beneficiary?.name || ""
+                    ) && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Please enter a valid name (letters only).
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Relationship
                     </label>
-                    <input 
+                    <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.beneficiary?.relationship || ""}
-                      onChange={(e) => handleBeneficiaryChange(index, "relationship", e.target.value)}
+                      onChange={(e) =>
+                        handleBeneficiaryChange(
+                          index,
+                          "relationship",
+                          e.target.value
+                        )
+                      }
                     />
+                    {!/^[A-Za-z\s]*$/.test(
+                      traveler.beneficiary?.relationship || ""
+                    ) && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Please enter a valid name (letters only).
+                      </p>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Contact Details
                     </label>
-                    <input 
+                    <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       value={traveler.beneficiary?.contactDetails || ""}
-                      onChange={(e) => handleBeneficiaryChange(index, "contactDetails", e.target.value)}
+                      maxLength={10}
+                      onChange={(e) =>
+                        handleBeneficiaryChange(
+                          index,
+                          "contactDetails",
+                          e.target.value
+                        )
+                      }
                     />
+                    {traveler.beneficiary?.contactDetails &&
+                      !/^[0-9]{10}$/.test(
+                        traveler.beneficiary?.contactDetails || ""
+                      ) && (
+                        <p className="text-red-500 text-xs mt-1">
+                          Enter a valid mobile number.
+                        </p>
+                      )}
                   </div>
                 </div>
               </div>
@@ -305,17 +451,13 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
           </CardContent>
         </Card>
       ))}
-      
+
       <div className="flex justify-between pt-6">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onBack}
-        >
+        <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button 
-          type="button" 
+        <Button
+          type="button"
           className="bg-insurance-blue hover:bg-insurance-blue/90"
           onClick={handleContinue}
         >
@@ -327,4 +469,3 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
 };
 
 export default AdditionalInfoForm;
-

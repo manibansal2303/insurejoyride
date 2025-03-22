@@ -100,7 +100,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({
       <div className="relative min-h-[400px] mb-16">
         <div
           className={cn(
-            "absolute w-full transition-all duration-500 transform",
+            "w-full transition-all duration-500 transform",
             direction === "forward" ? 
               (animatingStep === currentStep ? "animate-fade-in" : "animate-fade-out translate-x-full opacity-0") : 
               (animatingStep === currentStep ? "animate-fade-in" : "animate-fade-out -translate-x-full opacity-0")

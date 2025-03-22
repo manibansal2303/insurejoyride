@@ -29,8 +29,8 @@ import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   coverageType: z.enum(["Worldwide", "Schengen", "Asia", "Others"]),
-  originCountry: z.string().min(1, "Origin country is required"),
-  destinationCountry: z.string().min(1, "Destination country is required"),
+  originCountry: z.string().min(1, "Origin country is required").regex(/^[A-Za-z\s]+$/, "Origin country must only contain letters and spaces"),
+  destinationCountry: z.string().min(1, "Destination country is required").regex(/^[A-Za-z\s]+$/, "Destination country must only contain letters and spaces"),
   tripType: z.enum(["Single Trip", "Annual Multi-Trips"]),
   startDate: z.date({
     required_error: "Start date is required",
@@ -48,7 +48,7 @@ interface TravelDetailsFormProps {
 
 const TravelDetailsForm: React.FC<TravelDetailsFormProps> = ({ 
   initialValues, 
-  onSubmit 
+  onSubmit,
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,14 +63,16 @@ const TravelDetailsForm: React.FC<TravelDetailsFormProps> = ({
     }
   });
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    onSubmit({
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    const data = {
       ...initialValues,
       ...values,
       startDate: values.startDate.toISOString().split('T')[0],
       endDate: values.endDate.toISOString().split('T')[0],
-    });
+    };
+    onSubmit(data)
   };
+
 
   return (
     <div className="space-y-6">
@@ -193,7 +195,9 @@ const TravelDetailsForm: React.FC<TravelDetailsFormProps> = ({
                       <CalendarComponent
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                        }}
                         disabled={(date) => date < new Date()}
                         initialFocus
                       />

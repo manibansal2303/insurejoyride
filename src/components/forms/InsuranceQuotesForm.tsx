@@ -127,21 +127,21 @@ const InsuranceQuotesForm: React.FC<InsuranceQuotesFormProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-12 w-12 text-insurance-red mx-auto mb-4" />
-        <p className="text-insurance-red mb-4">There was an error loading insurance quotes.</p>
-        <pre className="text-xs text-gray-500 bg-gray-100 p-2 rounded mb-4 max-w-xl mx-auto overflow-auto">
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </pre>
-        <Button onClick={() => refetch()} className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Try Again
-        </Button>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="text-center py-12">
+  //       <AlertCircle className="h-12 w-12 text-insurance-red mx-auto mb-4" />
+  //       <p className="text-insurance-red mb-4">There was an error loading insurance quotes.</p>
+  //       <pre className="text-xs text-gray-500 bg-gray-100 p-2 rounded mb-4 max-w-xl mx-auto overflow-auto">
+  //         {error instanceof Error ? error.message : 'Unknown error'}
+  //       </pre>
+  //       <Button onClick={() => refetch()} className="flex items-center gap-2">
+  //         <RefreshCw className="h-4 w-4" />
+  //         Try Again
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   if (!insurancePlans || insurancePlans.length === 0) {
     return (

@@ -22,15 +22,40 @@ import { format, subYears } from "date-fns";
 import { cn } from "@/lib/utils";
 
 // Define the form schema for a single traveler
+// const travelerSchema = z.object({
+//   firstName: z.string().min(1, "First name is required"),
+//   lastName: z.string().min(1, "Last name is required"),
+//   dateOfBirth: z.date({
+//     required_error: "Date of birth is required",
+//   }),
+//   email: z.string().email("Invalid email address"),
+//   phone: z.string().min(1, "Phone number is required"),
+// });
+
 const travelerSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .regex(/^[A-Za-z]+$/, "Only alphabets are allowed."), // Only alphabets
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .regex(/^[A-Za-z]+$/, "Only alphabets are allowed."), // Only alphabets
   dateOfBirth: z.date({
     required_error: "Date of birth is required",
+  }).refine(date => date < new Date(), {
+    message: "Date of Birth cannot be in the future.", // Ensure date of birth is in the past
   }),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone number is required"),
+  email: z
+    .string()
+    .email("Enter a valid email address."), // Ensure valid email format
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Enter a valid mobile number.") // Phone number validation (basic)
+    .length(10, "Phone number must be exactly 10 digits."), // Length validation for 10 digits
 });
+
 
 interface PersonalInfoFormProps {
   travelDetails: TravelDetails;
@@ -189,7 +214,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter phone number" />
+                      <Input {...field} placeholder="Enter phone number" maxLength={10} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
