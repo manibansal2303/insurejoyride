@@ -8,6 +8,9 @@ import Index from './pages/Index';
 import Auth from './pages/Auth';
 import NotFound from './pages/NotFound';
 import ApiTest from './pages/ApiTest';
+import UserRegistration from './pages/UserRegistration';
+import ForgetPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Initialize auth on app startup
 initializeAuth();
@@ -23,8 +26,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/register" element={<UserRegistration />} />
             <Route path="/api-test" element={<ApiTest />} />
-            
+            <Route path="/forgot-password" element={<ForgetPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             {/* Add a catch-all route that redirects to the auth handler for auth callbacks */}
             <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
             
